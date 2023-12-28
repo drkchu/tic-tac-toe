@@ -97,7 +97,7 @@ function Cell() {
 }
 
 /**
- * 
+ * Since we only need one instance of the GameController, use an IIFE
  * @param {String} playerOneName 
  * @param {String} playerTwoName 
  */
