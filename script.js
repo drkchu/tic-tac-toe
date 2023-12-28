@@ -1,11 +1,9 @@
 /**
  * The gameboard represents the state of the tic-tac-toe board
- * Since we only need a single instance of the GameBoard, wrap within an IIFE
+ * 
  */
 
-const gameBoard = (function GameBoard() {
-    const size = 3;
-
+function GameBoard(size) {
     // Creating the 2D array (row-wise) to simulate the tic-tac-toe board
 
     const board = [];
@@ -27,7 +25,7 @@ const gameBoard = (function GameBoard() {
 
     // Returns true if at least one row is in a winning position for the player, false otherwise
     const checkRows = (player) => {
-        return board.some(row => cellsMatch(row, player));
+        return getBoard().some(row => cellsMatch(row, player));
     };
 
     // Returns true if at least one col is in a winning position for the player, false otherwise
@@ -37,7 +35,7 @@ const gameBoard = (function GameBoard() {
         for (let row = 0; row < size; row++) {
             boardReversed[row] = [];
             for (let col = 0; col < size; col++) {
-                boardReversed[row][col] = board[col][row];
+                boardReversed[row][col] = getBoard()[col][row];
             }
         }
 
@@ -50,8 +48,8 @@ const gameBoard = (function GameBoard() {
         const crossDiagonal = [];
 
         for (let i = 0; i < size; i++) {
-            mainDiagonal.push(board[i][i]);
-            crossDiagonal.push(board[i][size - i - 1])
+            mainDiagonal.push(getBoard()[i][i]);
+            crossDiagonal.push(getBoard()[i][size - i - 1])
         }
 
         return cellsMatch(mainDiagonal, player) || cellsMatch(crossDiagonal, player);
@@ -62,12 +60,8 @@ const gameBoard = (function GameBoard() {
 
     // Returns true if the current Player successfully marked the cell, false otherwise
     const markBoard = (row, col, player) => {
-        if (!board[row][col].getValue()) {
-            board[row][col].markCell(player);
-            displayBoard();
-            if (isWinner(player)) {
-                console.log(`Player ${player} has won!`);
-            }
+        if (!getBoard()[row][col].getValue()) {
+            getBoard()[row][col].markCell(player);
             return true;
         }
         return false;
@@ -76,12 +70,11 @@ const gameBoard = (function GameBoard() {
     // Displays the board to the console, (probably) won't be used for the UI
     const displayBoard = () => {
         console.log(
-            `${board[0][0].getValue()} | ${board[0][1].getValue()} | ${board[0][2].getValue()}\n----------\n${board[1][0].getValue()} | ${board[1][1].getValue()} | ${board[1][2].getValue()}\n----------\n${board[2][0].getValue()} | ${board[2][1].getValue()} | ${board[2][2].getValue()}`);
+            `${getBoard()[0][0].getValue()} | ${getBoard()[0][1].getValue()} | ${getBoard()[0][2].getValue()}\n----------\n${getBoard()[1][0].getValue()} | ${getBoard()[1][1].getValue()} | ${getBoard()[1][2].getValue()}\n----------\n${getBoard()[2][0].getValue()} | ${getBoard()[2][1].getValue()} | ${getBoard()[2][2].getValue()}`);
     }
 
     return { getBoard, markBoard, displayBoard, isWinner };
-
-})();
+};
 
 /**
  * A cell in the tic-tac-toe board which can have one of the three following values
@@ -103,9 +96,57 @@ function Cell() {
     return { markCell, getValue };
 }
 
-// Testing environment
-gameBoard.markBoard(0, 2, 1);
-gameBoard.markBoard(1, 1, 1);
-gameBoard.markBoard(0, 0, 1);
-gameBoard.markBoard(1, 0, 1);
+/**
+ * 
+ * @param {String} playerOneName 
+ * @param {String} playerTwoName 
+ */
+const game = (function GameController(playerOneName = "Player 1", playerTwoName = "Player 2") {
+    const board = GameBoard(3);
+
+    const players = [
+        {
+            name: playerOneName,
+            token: 1 
+        },
+        {
+            name: playerTwoName,
+            token: 2
+        }
+    ];
+
+    let activePlayer = players[0] // Default to the first player in rotation
+
+    const switchActivePlayer = () => {
+        activePlayer = activePlayer === players[0] ? players[1] : players[0];
+    }
+
+    const getActivePlayer = () => activePlayer;
+
+    const printNewRound = () => {
+        board.displayBoard();
+        console.log(`It's ${getActivePlayer().name}'s turn to go!`);
+    }
+
+    const playRound = (row, col) => {
+        console.log(`Placing ${getActivePlayer().name}'s token into Row: ${row} Column: ${col}`);
+        if (!board.markBoard(row, col, getActivePlayer().token)) {
+            return;
+        }
+
+        // check for win condition
+        if (board.isWinner(getActivePlayer().token)) {
+            console.log(`${getActivePlayer().name} has won!`);
+            return; // HANDLE THE WINNER
+        }
+
+        switchActivePlayer();
+        printNewRound();
+    }
+
+    // Initialize the game
+    printNewRound();
+
+    return { playRound, getActivePlayer };
+})();
 
