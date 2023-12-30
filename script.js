@@ -18,6 +18,16 @@ function GameBoard(size) {
     // Getter for retrieving the board
     const getBoard = () => board;
 
+    // Resets the board to its original state
+    const resetBoard = () => {
+        for (let row = 0; row < size; row++) {
+            board[row] = [];
+            for (let col = 0; col < size; col++) {
+                board[row].push(Cell());
+            }
+        }
+    }
+
     // Returns true if the all the cells have values equal to player, false otherwise
     const cellsMatch = (cells, player) => {
         return cells.every(cell => cell.getValue() === player);
@@ -58,6 +68,17 @@ function GameBoard(size) {
     // Checks to see if the given player has a winning position on the board
     const isWinner = (player) => checkRows(player) || checkCols(player) || checkDiagonal(player);
 
+    // Returns true if there is a mark in every cell
+    const isFull = () => {
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                if (board[row][col].getValue() === 0)
+                    return false;
+            }
+        }
+        return true;
+    }
+
     // Returns true if the current Player successfully marked the cell, false otherwise
     const markBoard = (row, col, player) => {
         if (!getBoard()[row][col].getValue()) {
@@ -73,7 +94,7 @@ function GameBoard(size) {
             `${getBoard()[0][0].getValue()} | ${getBoard()[0][1].getValue()} | ${getBoard()[0][2].getValue()}\n----------\n${getBoard()[1][0].getValue()} | ${getBoard()[1][1].getValue()} | ${getBoard()[1][2].getValue()}\n----------\n${getBoard()[2][0].getValue()} | ${getBoard()[2][1].getValue()} | ${getBoard()[2][2].getValue()}`);
     }
 
-    return { getBoard, markBoard, displayBoard, isWinner };
+    return { getBoard, markBoard, displayBoard, isWinner, resetBoard, isFull };
 };
 
 /**
@@ -107,15 +128,19 @@ function GameController(playerOneName = "Player 1", playerTwoName = "Player 2") 
     const players = [ // array for players in the game
         {
             name: playerOneName,
-            token: 1 
+            token: 1,
+            score: 0 
         },
         {
             name: playerTwoName,
-            token: 2
+            token: 2,
+            score: 0
         }
     ];
 
     let activePlayer = players[0] // Default to the first player in rotation
+
+    const getPlayers = () => players;
 
     const switchActivePlayer = () => {
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
@@ -138,31 +163,39 @@ function GameController(playerOneName = "Player 1", playerTwoName = "Player 2") 
         if (board.isWinner(getActivePlayer().token)) {
             board.displayBoard();
             console.log(`${getActivePlayer().name} has won!`);
-            return; // HANDLE THE WINNER
+            return true; // HANDLE THE WINNER
         }
 
-        switchActivePlayer();
+        if (!board.isFull())
+            switchActivePlayer();
+        
         printNewRound();
     }
 
     // Initialize the game
     printNewRound();
 
-    return { playRound, getActivePlayer, getBoard: board.getBoard };
+    return { playRound, getActivePlayer, getBoard: board.getBoard, getPlayers, resetBoard: board.resetBoard, isFull: board.isFull };
 };
 
 function ScreenController() {
     const game = GameController(); // Using default names
+
     const announcements = document.querySelector('.announcements');
     const boardContainer = document.querySelector('.board');
+    const leftScore = document.querySelector('.left-score');
+    const rightScore = document.querySelector('.right-score');
+    const playAgainModal = document.querySelector('.play-again-modal');
+    const playAgainButton = document.querySelector('.play-again-button');
 
     const updateScreen = () => {
-        boardContainer.textContent = ''; // wipes the screen's board
-
+        boardContainer.textContent = '';
         const board = game.getBoard();
         const activePlayer = game.getActivePlayer();
 
         announcements.textContent = `It's ${activePlayer.name}'s turn!`;
+        leftScore.textContent = `${game.getPlayers()[0].name}: ${game.getPlayers()[0].score}`;
+        rightScore.textContent = `${game.getPlayers()[1].name}: ${game.getPlayers()[1].score}`;
 
         board.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
@@ -181,15 +214,34 @@ function ScreenController() {
     function clickHandlerBoard(e) {
         const selectedRow = e.target.dataset.row;
         const selectedColumn = e.target.dataset.column;
-
+        const activePlayer = game.getActivePlayer();
         // Make sure I've clicked a column and not the gaps in between
         if (!selectedRow || !selectedColumn) return;
 
-        game.playRound(selectedRow, selectedColumn);
+        if (game.playRound(selectedRow, selectedColumn)) {
+            activePlayer.score++;
+            updateScreen();
+            announcements.textContent = `${activePlayer.name} has won this round!`;
+            playAgainModal.showModal();
+            return;
+        }
+
+        if (game.isFull()) {
+            updateScreen();
+            announcements.textContent = `This game has ended in a tie!`;
+            playAgainModal.showModal();
+            return;
+        }
         updateScreen();
     }
 
     boardContainer.addEventListener("click", clickHandlerBoard);
+    playAgainButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        game.resetBoard();
+        playAgainModal.close();
+        updateScreen();
+    });
 
     updateScreen(); // Initial render
 
