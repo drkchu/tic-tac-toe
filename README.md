@@ -1,2 +1,2 @@
-# Tic Tac Toe
-The classic game of Tic Tac Toe!
+# Tic-Tac-Toe
+Check out the [page](https://drkchu.github.io/tic-tac-toe/)
