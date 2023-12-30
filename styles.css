@@ -1,3 +1,66 @@
 :root { /* VARIABLES */
-    
+    --background: #fdfdfd;
+    --black: rgb(5, 5, 26);
+    --light-gray: lightgray;
+    --gray: gray;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Press Start 2P', sans-serif;
+    background-color: var(--background);
+}
+
+html {
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.header {
+    font-size: 3rem;
+    text-align: center;
+    padding: 2rem;
+}
+
+.announcements {
+    height: 1rem;
+}
+
+.board {
+    display: grid;
+    height: fit-content;
+    width: fit-content; /* So that the board is only as wide as the content*/
+    margin: auto auto;
+    grid-template: repeat(3, 12rem) / repeat(3, 12rem);
+    place-items: center;
+    gap: 0.5rem;
+    background-color: var(--black);
+}
+
+.cell {
+    font-family: 'Finger Paint', sans-serif;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    font-size: 8rem;
+    border: 0;
+}
+
+.cell:hover {
+    background-color: var(--light-gray);
+    cursor: pointer;
+}
+
+.cell:active {
+    background-color: var(--gray);
 }

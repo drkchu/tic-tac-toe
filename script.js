@@ -101,10 +101,10 @@ function Cell() {
  * @param {String} playerOneName 
  * @param {String} playerTwoName 
  */
-const game = (function GameController(playerOneName = "Player 1", playerTwoName = "Player 2") {
-    const board = GameBoard(3);
+function GameController(playerOneName = "Player 1", playerTwoName = "Player 2") {
+    const board = GameBoard(3); // an instance of the GameBoard
 
-    const players = [
+    const players = [ // array for players in the game
         {
             name: playerOneName,
             token: 1 
@@ -136,6 +136,7 @@ const game = (function GameController(playerOneName = "Player 1", playerTwoName 
 
         // check for win condition
         if (board.isWinner(getActivePlayer().token)) {
+            board.displayBoard();
             console.log(`${getActivePlayer().name} has won!`);
             return; // HANDLE THE WINNER
         }
@@ -147,6 +148,52 @@ const game = (function GameController(playerOneName = "Player 1", playerTwoName 
     // Initialize the game
     printNewRound();
 
-    return { playRound, getActivePlayer };
-})();
+    return { playRound, getActivePlayer, getBoard: board.getBoard };
+};
+
+function ScreenController() {
+    const game = GameController(); // Using default names
+    const announcements = document.querySelector('.announcements');
+    const boardContainer = document.querySelector('.board');
+
+    const updateScreen = () => {
+        boardContainer.textContent = ''; // wipes the screen's board
+
+        const board = game.getBoard();
+        const activePlayer = game.getActivePlayer();
+
+        announcements.textContent = `It's ${activePlayer.name}'s turn!`;
+
+        board.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+                const cellButton = document.createElement('button');
+                cellButton.classList.add('cell');
+                cellButton.dataset.row = rowIndex;
+                cellButton.dataset.column = colIndex;
+                cellButton.textContent = cell.getValue() === 0 ? '' : // Player 1 is X, 2 is O
+                    cell.getValue() === 1 ? 'X' : 'O';
+                boardContainer.appendChild(cellButton);
+            });
+        });
+    };
+
+    // Add event listener for the board
+    function clickHandlerBoard(e) {
+        const selectedRow = e.target.dataset.row;
+        const selectedColumn = e.target.dataset.column;
+
+        // Make sure I've clicked a column and not the gaps in between
+        if (!selectedRow || !selectedColumn) return;
+
+        game.playRound(selectedRow, selectedColumn);
+        updateScreen();
+    }
+
+    boardContainer.addEventListener("click", clickHandlerBoard);
+
+    updateScreen(); // Initial render
+
+}
+
+ScreenController();
 
